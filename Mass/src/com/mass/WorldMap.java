@@ -36,7 +36,7 @@ public class WorldMap {
 	
 	public WorldMap(NewWorld world2) {
 		this.world = world2;
-        FileHandle xmlmap = Gdx.files.internal( "data/maps/map_perlin.xml" );
+        FileHandle xmlmap = Gdx.files.internal( "data/maps/map_perlin2.xml" );
         
         //if( xmlmap.exists() ) {
 	        String data_file = xmlmap.readString();
@@ -60,7 +60,7 @@ public class WorldMap {
 	        
 		createPlanets();
 		createAsteroids();
-		//createTrash();
+		createTrash();
 	}
 	
 	public void createPlanets() {

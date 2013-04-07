@@ -130,7 +130,7 @@ public class GameScreen implements Screen, InputProcessor {
 		slider.setHeight((float) (screenHeight/2 + 100));
 		slider.addListener(stopTouchDown);
 		slider.setX( 20);
-		slider.setY( 30);
+		slider.setY( 60);
 		
 		//stage.addActor(img2Button);
 		stage.addActor(slider);

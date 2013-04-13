@@ -189,7 +189,7 @@ public class GameScreen implements Screen, InputProcessor {
 	
 	@Override
 	public void resize(int width, int height) {
-		
+		renderer.resize(width, height);
 		this.width = width;
 		this.height = height;
 	}
@@ -237,22 +237,30 @@ public class GameScreen implements Screen, InputProcessor {
 		controller.update(delta);
 		
 		Body playerBody = world.getPlayer().getBody();
-		Body planetBody = world.getPlanet().getBody();
 		
-		float planetRadius = 2700f;
-		Vector2 planetDistance = new Vector2(0,0);
-        planetDistance.add(playerBody.getPosition());
-		planetDistance.sub(planetBody.getPosition());
-		float finalDistance = planetDistance.len();
-		if (finalDistance<=planetRadius*3) {
-			planetDistance.x = -planetDistance.x;
-			planetDistance.y = -planetDistance.y;
+		
+		//Body planetBody = world.getPlanet().getBody();
+		
+		Array<Planet> planets = world.getPlanets();
+		for(Planet planet : planets) {
 			
-	        float vecSum = Math.abs(planetDistance.x)+Math.abs(planetDistance.y);
-	        planetDistance.mul((1/vecSum)*planetRadius/finalDistance);
-	        playerBody.applyForce(planetDistance, playerBody.getWorldCenter());
-	        
+			float planetRadius = 3000f;
+			Vector2 planetDistance = new Vector2(0,0);
+	        planetDistance.add(playerBody.getPosition());
+			planetDistance.sub(planet.getBody().getPosition());
+			float finalDistance = planetDistance.len();
+			if (finalDistance<=planetRadius*3) {
+				planetDistance.x = -planetDistance.x;
+				planetDistance.y = -planetDistance.y;
+				
+		        float vecSum = Math.abs(planetDistance.x)+Math.abs(planetDistance.y);
+		        planetDistance.mul((1/vecSum)*planetRadius/finalDistance);
+		        playerBody.applyForce(planetDistance, playerBody.getWorldCenter());
+		        
+			}
+			
 		}
+
 		
 
 		  

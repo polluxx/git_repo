@@ -83,10 +83,10 @@ public class NewWorld {
 	Array<Body> chains = new Array<Body>();
 	
 	// array of planets
-	Array<Body> planets = new Array<Body>();
+	Array<Planet> planets = new Array<Planet>();
 	
 	// -- asteroids create --
-	Array<Body> asteroids = new Array<Body>();
+	Array<Asteroid> asteroids = new Array<Asteroid>();
 	
 	/** a hit body **/
 	Body hitBody = null;
@@ -136,9 +136,14 @@ public class NewWorld {
 		return planet;
 	}
 	
-	public Array<Body> getPlanets() {
+	public Array<Planet> getPlanets() {
 		return planets;
 	}
+	
+	public Array<Asteroid> getAsteroids() {
+		return asteroids;
+	}
+	
 	
 	public World getWorld(){
 		return world;
@@ -221,7 +226,7 @@ public class NewWorld {
 		def.type = BodyType.DynamicBody;
 		shipModel = world.createBody(def);
 		player = new Player(shipModel);		
-		player.getBody().setTransform((float) 3.5, -100, 0);
+		player.getBody().setTransform((float) 360, 360, 0);
 		
 		weapon = new Weapon(this, WeaponType.GRIP);	
 		weapon.createGripBody();
@@ -278,7 +283,7 @@ public class NewWorld {
 			for(int i=0;i<astToCreate; ++i){
 				double randomInt = Math.random();
 				Body circleGround = createCircles((float) randomInt * 10);
-				asteroids.add(circleGround);
+				//asteroids.add(circleGround);
 			}
 		}
 	}

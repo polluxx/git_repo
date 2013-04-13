@@ -2,6 +2,9 @@ package com.mass;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -23,6 +26,9 @@ public class WorldMap {
 	
 	private NewWorld world;
 	
+	Asteroid asteroid;
+	Sprite asteroidSprite = new Sprite();
+	
 	// create array of planets coords
 	Array<Element> planetsCoords = new Array<Element>();
 	Vector2 currentCoordsPlanet;
@@ -32,11 +38,18 @@ public class WorldMap {
 	Array<Element> asterPoints = new Array<Element>();
 	Array<Element> trashPoints = new Array<Element>();
 	
-	Array<Body> planets;
+	Array<Planet> planets;
+	
+	Array<Asteroid> asteroids;
+	TextureRegion ast2;
+	TextureRegion ast3;
+	TextureRegion ast4;
+	TextureRegion ast5;
+	TextureRegion ast6;
 	
 	public WorldMap(NewWorld world2) {
 		this.world = world2;
-        FileHandle xmlmap = Gdx.files.internal( "data/maps/map_perlin.xml" );
+        FileHandle xmlmap = Gdx.files.internal( "data/maps/map_perlin2.xml" );
         
         //if( xmlmap.exists() ) {
 	        String data_file = xmlmap.readString();
@@ -79,10 +92,13 @@ public class WorldMap {
         	    	iterateCoordsPlanet = new Vector2(iterX, iterY);
         			float length = currentCoordsPlanet.dst(iterateCoordsPlanet);
         			
-        			if (length > 150 && planetsCoords.size < 4) {
+        			if ((int)length > 150 && planetsCoords.size < 2) {
+        				
         				planetsCoords.add(topPoint);
         				planetsCoords.add(nextPoint);
+        				
         			}
+        			
         		}
         	}
 		
@@ -94,11 +110,12 @@ public class WorldMap {
 					defPlanet.type = BodyType.StaticBody;
 					Body boxPlanet = world.getWorld().createBody(defPlanet);
 					Planet planet = new Planet(boxPlanet, 30f * size);
+					planet.radius = 30f * size;
 					planet.getBody().setTransform(coordX, coordY, 0);
 					
 					// adding planets to array
 					planets = world.getPlanets();
-					planets.add(planet.getBody());
+					planets.add(planet);
 				}
 			}
         }
@@ -106,11 +123,22 @@ public class WorldMap {
 	
 	public void createAsteroids() {
 		if (asterPoints.size > 1) {
+			TextureRegion[] textures = new TextureRegion[5];
+			textures[0] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast2.png")));
+			textures[1] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast3.png")));
+			textures[2] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast4.png")));
+			textures[3] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast5.png")));
+			textures[4] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast6.png")));
+			
+			
 			for(Element asteroid : asterPoints) { 
+				double rand = Math.random() * 10 / 2;
+				
     	    	float coordX = Float.parseFloat(asteroid.getAttribute("x"));
     	    	float coordY = Float.parseFloat(asteroid.getAttribute("y"));
     	    	float size  = Float.parseFloat(asteroid.getAttribute("elevation"));
-    	    	createAsteroid(coordX, coordY, size + 1);
+    	    	createAsteroid(coordX*2, coordY*2, size + 1, textures[(int) rand]);
+    	    	
 			}
 		}
 	}
@@ -121,31 +149,21 @@ public class WorldMap {
     	    	float coordX = Float.parseFloat(trash.getAttribute("x"));
     	    	float coordY = Float.parseFloat(trash.getAttribute("y"));
     	    	float size  = Float.parseFloat(trash.getAttribute("elevation"));
-    	    	createAsteroid(coordX, coordY, size);
+    	    	createAsteroid(coordX, coordY, size, asteroidSprite);
 			}
 		}
 	}
 	
-	public void createAsteroid(float x, float y, float size) {
+	public void createAsteroid(float x, float y, float size, TextureRegion region) {
 		BodyDef bodyDef2 = new BodyDef();
 		bodyDef2.type = BodyType.DynamicBody;
 		bodyDef2.position.set(x , y);
-		Body body2 = world.getWorld().createBody(bodyDef2);
+		Body asteroidBody = world.getWorld().createBody(bodyDef2);
+		asteroid = new Asteroid(asteroidBody, size, region);
 		
-		CircleShape circle2 = new CircleShape();
-		circle2.setRadius((float) (size*1f));
+		// adding trash to array
+		asteroids = world.getAsteroids();
+		asteroids.add(asteroid);
 		
-		// Create a fixture definition to apply our shape to
-		FixtureDef fixtureDef2 = new FixtureDef();
-		fixtureDef2.shape = circle2;
-		fixtureDef2.density = 0.4f; 
-		fixtureDef2.friction = 0.2f;
-		fixtureDef2.restitution = 0.5f; // Make it bounce a little bit
-		
-		body2.createFixture(fixtureDef2);
-		body2.resetMassData();
-		String userData = "asteroid";
-		body2.setUserData(userData);
-		circle2.dispose();
 	}
 }

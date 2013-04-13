@@ -83,9 +83,15 @@ public class WorldRenderer {
 	private SpriteBatch batch;
 	private Sprite sprite;
 	
+	public float currentRotationWorld;
+	
 	public Player player;
 	
-	Array<Body> planets;
+	
+	Array<Planet> planets;
+	Array<Asteroid> asteroids;
+	
+	Vector2 planetPosition;
 	
 	Button imgButton;
 	Button img2Button;
@@ -118,7 +124,7 @@ public class WorldRenderer {
     static final int screenWidth = Gdx.graphics.getWidth();
     static final int screenHeight = Gdx.graphics.getHeight();
     
-    Texture image;
+    TextureRegion image;
     
     private Table container;
     private int ANGLE = 0;
@@ -128,21 +134,24 @@ public class WorldRenderer {
 	Body firstBody = null;
 	Body secondBody = null;
 	
+	BitmapFont font;
+	
 	public WorldRenderer(final NewWorld world, float w, float h, boolean debug) {
 		renderer = new Box2DDebugRenderer();
 		font = new BitmapFont();
 		this.world = world;
 		CAMERA_WIDTH = w;
 		CAMERA_HEIGHT = h;
-		ppuX = (float)Gdx.graphics.getWidth() / CAMERA_WIDTH;
-		ppuY = (float)Gdx.graphics.getHeight() / CAMERA_HEIGHT;
+		
+		image = new TextureRegion(new Texture(Gdx.files.internal("data/planet_01.png")));
+		
 		spriteBatch = new SpriteBatch();
 		 textureRegions = new HashMap<String, TextureRegion>();
 		//loadTextures();
 		this.cam = new OrthographicCamera(CAMERA_WIDTH, CAMERA_HEIGHT);
 		this.cam.viewportHeight = 8f;  
 		this.cam.viewportWidth = 12f;  
-		//SetCamera(CAMERA_WIDTH / 2f, CAMERA_HEIGHT / 2f);
+		
 		zoom = this.cam.zoom = 15;
 		ray=new ImmediateModeRenderer10();
 		
@@ -153,7 +162,10 @@ public class WorldRenderer {
 	}
 	
 	public void resize (int width, int height) {
-        stage.setViewport(width, height, false);
+		
+		ppuX = (float)width / CAMERA_WIDTH;
+		ppuY = (float)height / CAMERA_HEIGHT;
+        //stage.setViewport(width, height, false);
 	}
 	
 	public Skin returnSkin(){
@@ -182,6 +194,7 @@ public class WorldRenderer {
 		camera_angle = (float) ((float) world.getPlayer().getAngle() - 90);
 		float substrat = camera_angle - setted_angle;
 		setted_angle = camera_angle;
+		currentRotationWorld = substrat;
 		
 		this.cam.position.set(x, y, 0);
 		if (substrat != 0) {
@@ -200,7 +213,7 @@ public class WorldRenderer {
 		world.dispose();
 		spriteBatch.dispose();
 	}
-	BitmapFont font;
+	
 	
 	RayCastCallback laserFired = new RayCastCallback() {
 		
@@ -227,8 +240,8 @@ public class WorldRenderer {
 		ray.begin(GL10.GL_LINE_LOOP);
 		planets = world.getPlanets();
 		if (planets.size > 1) {
-			for(Body planet : planets) {
-				Vector2 point2 = planet.getPosition();
+			for(Planet planet : planets) {
+				Vector2 point2 = planet.getBody().getPosition();
 				ray.color(1, 0, 0, 1);
 				ray.vertex(point1.x,point1.y,0);
 				ray.color(0, 1, 0, 1);
@@ -237,15 +250,43 @@ public class WorldRenderer {
 		}
 		ray.end();
 
-		  
-		  
+		drawAll();  
+		
+		changeAngle();
+		
+		changeEnergy();
+		
+		// make WORLD step
+		world.getWorld().step(delta, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
+		world.getWorld().clearForces();
+		//connectBodies();
+		//world.killBodies();
+		world.reloadMap(world.getPlayer().getBody().getPosition());
+		
+		SetCamera(world.getPlayer().getBody().getPosition().x, world.getPlayer().getBody().getPosition().y, 0);
+		
+	}
+	
+	private void drawAll() {
+		//spriteBatch.setProjectionMatrix(cam.combined);
 		spriteBatch.begin();
 		font.draw(spriteBatch, "Ship position x : "+(int)world.getPlayer().getBody().getPosition().x+"  y : "+(int)world.getPlayer().getBody().getPosition().y, 20, 60);
-		//font.draw(spriteBatch, "Speed : " + (int)world.getPlayer().getCurrentVelocity(), 20, 20);
-		
+		//drawPlayer();
+		drawPlanet();
+		drawTrash();
 		font.draw(spriteBatch, "Energy : " + (int)world.getPlayer().getEnergy(), 20, 20);
 		spriteBatch.end();
-		
+	}
+	
+	private void changeEnergy() {
+		// set ship ENERGY
+		int player_energy = (int) world.getPlayer().getEnergy();
+		if (player_energy < world.getPlayer().MAX_ENERGY) {
+			world.getPlayer().setEnergy(world.getPlayer().energy_dump);
+		}
+	}
+	
+	private void changeAngle() {
 		Body player = world.getPlayer().getBody();
 		double accelY = (float) Gdx.input.getAccelerometerY();
 		player.applyAngularImpulse(0);
@@ -261,25 +302,6 @@ public class WorldRenderer {
 			player.applyForce(-angleNor * (world.getPlayer().getCurrentVelocity() / 2), angleNor * world.getPlayer().getCurrentVelocity() * 2, player.getPosition().x, player.getPosition().y);
 			player.applyAngularImpulse(angleNor);
 		}
-		
-		
-		// set ship ENERGY
-		int player_energy = (int) world.getPlayer().getEnergy();
-		if (player_energy < world.getPlayer().MAX_ENERGY) {
-			world.getPlayer().setEnergy(world.getPlayer().energy_dump);
-		}
-		
-		
-		world.getWorld().step(delta, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
-		world.getWorld().clearForces();
-		//connectBodies();
-		//world.killBodies();
-		world.reloadMap(world.getPlayer().getBody().getPosition());
-		//chainWithIP();
-		
-		SetCamera(world.getPlayer().getBody().getPosition().x, world.getPlayer().getBody().getPosition().y, 0);
-		
-		
 	}
 	
 	Vector3 testPoint = new Vector3();
@@ -287,11 +309,6 @@ public class WorldRenderer {
 	QueryCallback callback = new QueryCallback() {
 		@Override
 		public boolean reportFixture (Fixture fixture) {
-			// if the hit fixture's body is the ground body
-			// we ignore it
-			//if (fixture.getBody() == groundBody) return true;
-			// if the hit point is inside the fixture of the body
-			// we report it
 			
 			//if (fixture.testPoint(testPoint.x, testPoint.y)) {
 				
@@ -314,18 +331,6 @@ public class WorldRenderer {
 			        hitBody.applyForce(planetDistance, hitBody.getWorldCenter());
 					
 					hitBody.setActive(true);
-					
-					//hitBody.setBullet(false);
-					//Vector2 worldpoint = new Vector2(0,0);
-					//Vector2 worldCoordsAnchorPoint = hitBody.getWorldPoint( worldpoint );
-					//PrismaticJointDef jointDef = new PrismaticJointDef();
-					//jointDef.enableLimit = true;
-					//jointDef.initialize(hitBody, chainBody, hitBody.getPosition(), chainBody.getPosition());
-			        //world.getWorld().createJoint(jointDef);
-			        
-			        //founded.add(hitBody);
-			        //hitBody = null;
-			        //chainBody = null;
 				}
 				return false;
 			//} else
@@ -434,7 +439,7 @@ public class WorldRenderer {
 	    
 	    Sprite bottleSprite = new Sprite(image2);
 	    bottleSprite.setSize(27, 27);
-	    bottleSprite.setPosition(226, 152);
+	    bottleSprite.setPosition(screenWidth/2 - 10, screenHeight/2);
 	    bottleSprite.setOrigin(world.getShipOrigin().x, world.getShipOrigin().y);
 	    bottleSprite.rotate90(false);
 	    bottleSprite.draw(spriteBatch);
@@ -442,13 +447,51 @@ public class WorldRenderer {
 	}
 	
 	private void drawPlanet(){
-	    Vector2 planetPos = world.getPlanet().getBody().getPosition();
-	    TextureRegion image = new TextureRegion(new Texture(Gdx.files.internal("data/planet_01.png")));
+	    Vector3 drawPosition = new Vector3();
+	    float angleDeg = world.getPlayer().getBody().getAngle()* MathUtils.radiansToDegrees;
 	    
-	    Sprite planetSprite = new Sprite(image);
-	    planetSprite.setSize(300, 300);
-	    planetSprite.setOrigin(planetPos.x, planetPos.y);
-	    //planetSprite.setPosition(planetPos.x, planetPos.y);
-	    planetSprite.draw(spriteBatch);
+		planets = world.getPlanets();
+		if (planets.size > 1) {
+			for(Planet planet : planets) {
+				float angle = planet.getBody().getAngle()* MathUtils.radiansToDegrees;
+				planetPosition = planet.getBody().getPosition();
+				drawPosition.set(planetPosition.x, planetPosition.y, 0);
+			    this.cam.project(drawPosition);
+			    float radius = planet.radius;
+			    sprite = new Sprite(image);
+			    //spriteBatch.draw(image, drawPosition.x-(radius*3), drawPosition.y-(radius*3), radius*6, radius*6);
+			    sprite.setSize(radius*6, radius*6);
+			    //sprite.setOrigin(0, 0);
+			    //sprite.setOrigin(drawPosition.x-180, drawPosition.y-100);
+			    sprite.setPosition(drawPosition.x-(radius*3), drawPosition.y-(radius*3));
+				sprite.setRotation(angle);
+				sprite.draw(spriteBatch);
+				
+			}
+		}
+	}
+	
+	public void drawTrash(){
+	    Vector3 drawPosition = new Vector3();
+	    float angleDeg = world.getPlayer().getBody().getAngle()* MathUtils.radiansToDegrees;
+	    Sprite sprite;
+		asteroids = world.getAsteroids();
+		if (asteroids.size > 1) {
+			for(Asteroid asteroid : asteroids) {
+				
+				float angle = asteroid.getBody().getAngle()* MathUtils.radiansToDegrees;
+				planetPosition = asteroid.getBody().getPosition();
+				drawPosition.set(planetPosition.x, planetPosition.y, 0);
+			    this.cam.project(drawPosition);
+			    float radius = 2;
+			    sprite = new Sprite(asteroid.region);
+			    sprite.setSize(radius*6, radius*6);
+			    //sprite.setOrigin(0, 0);
+			    sprite.setPosition(drawPosition.x-(radius*3), drawPosition.y-(radius*3));
+				//sprite.setRotation(angle);
+				sprite.draw(spriteBatch);
+				
+			}
+		}
 	}
 }

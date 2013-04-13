@@ -271,10 +271,11 @@ public class WorldRenderer {
 		//spriteBatch.setProjectionMatrix(cam.combined);
 		spriteBatch.begin();
 		font.draw(spriteBatch, "Ship position x : "+(int)world.getPlayer().getBody().getPosition().x+"  y : "+(int)world.getPlayer().getBody().getPosition().y, 20, 60);
+		font.draw(spriteBatch, "Energy : " + (int)world.getPlayer().getEnergy(), 20, 20);
 		//drawPlayer();
 		drawPlanet();
 		drawTrash();
-		font.draw(spriteBatch, "Energy : " + (int)world.getPlayer().getEnergy(), 20, 20);
+		
 		spriteBatch.end();
 	}
 	
@@ -477,14 +478,15 @@ public class WorldRenderer {
 	    Sprite sprite;
 		asteroids = world.getAsteroids();
 		if (asteroids.size > 1) {
+			
 			for(Asteroid asteroid : asteroids) {
 				
 				float angle = asteroid.getBody().getAngle()* MathUtils.radiansToDegrees;
 				planetPosition = asteroid.getBody().getPosition();
 				drawPosition.set(planetPosition.x, planetPosition.y, 0);
 			    this.cam.project(drawPosition);
-			    float radius = 2;
-			    sprite = new Sprite(asteroid.region);
+			    float radius = 3;
+			    sprite = asteroid.region;
 			    sprite.setSize(radius*6, radius*6);
 			    //sprite.setOrigin(0, 0);
 			    sprite.setPosition(drawPosition.x-(radius*3), drawPosition.y-(radius*3));

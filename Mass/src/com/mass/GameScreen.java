@@ -230,7 +230,7 @@ public class GameScreen implements Screen, InputProcessor {
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 		//world.update(delta);
 		//world.draw();
-		
+		renderer.render(delta);
 		stage.act( delta );
 		stage.draw();
 		
@@ -283,7 +283,7 @@ public class GameScreen implements Screen, InputProcessor {
 		if (setter > 1) {
 			world.getPlayer().changeVelocity((float) (accelX * 0.05));
 		}*/
-		renderer.render(delta);
+		
 	}
 	@Override
 	public boolean keyUp(int keycode) {

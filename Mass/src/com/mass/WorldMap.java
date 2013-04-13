@@ -1,5 +1,8 @@
 package com.mass;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
 
@@ -47,11 +50,12 @@ public class WorldMap {
 	TextureRegion ast4;
 	TextureRegion ast5;
 	TextureRegion ast6;
+	public  Map<String, TextureRegion> textureRegions;
 	
 	public WorldMap(NewWorld world2) {
 		this.world = world2;
         FileHandle xmlmap = Gdx.files.internal( "data/maps/map_perlin2.xml" );
-        
+        textureRegions = new HashMap<String, TextureRegion>();
         //if( xmlmap.exists() ) {
 	        String data_file = xmlmap.readString();
 	        XmlReader reader = new XmlReader();
@@ -124,12 +128,20 @@ public class WorldMap {
 	
 	public void createAsteroids() {
 		if (asterPoints.size > 1) {
-			TextureRegion[] textures = new TextureRegion[5];
-			textures[0] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast2.png")));
-			textures[1] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast3.png")));
-			textures[2] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast4.png")));
-			textures[3] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast5.png")));
-			textures[4] = new TextureRegion(new Texture(Gdx.files.internal("images/trash/ast6.png")));
+			Sprite[] textures = new Sprite[5];
+			
+			Texture texture  = new Texture(Gdx.files.internal("images/trash/asteroids.png"));
+			TextureRegion regions[][] = TextureRegion.split(texture, 64,64);
+			
+			textureRegions.put("ast"+0,  regions[0][0]);
+			textureRegions.put("ast"+1,  regions[1][0]);
+			textureRegions.put("ast"+2,  regions[2][0]);
+			textureRegions.put("ast"+3,  regions[3][0]);
+			textureRegions.put("ast"+4,  regions[0][1]);
+			
+			for(int i = 0; i<5; i++) {
+				textures[i] = new Sprite(textureRegions.get("ast"+i));
+			}
 			
 			
 			for(Element asteroid : asterPoints) { 
@@ -138,7 +150,7 @@ public class WorldMap {
     	    	float coordX = Float.parseFloat(asteroid.getAttribute("x"));
     	    	float coordY = Float.parseFloat(asteroid.getAttribute("y"));
     	    	float size  = Float.parseFloat(asteroid.getAttribute("elevation"));
-    	    	createAsteroid(coordX*2, coordY*2, size + 1, textures[(int) rand]);
+    	    	createAsteroid(coordX*2, coordY*2, size + 1, textures[(int)rand]);
     	    	
 			}
 		}
@@ -155,7 +167,7 @@ public class WorldMap {
 		}
 	}
 	
-	public void createAsteroid(float x, float y, float size, TextureRegion region) {
+	public void createAsteroid(float x, float y, float size, Sprite region) {
 		BodyDef bodyDef2 = new BodyDef();
 		bodyDef2.type = BodyType.DynamicBody;
 		bodyDef2.position.set(x , y);

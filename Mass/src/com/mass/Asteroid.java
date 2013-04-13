@@ -10,11 +10,11 @@ public class Asteroid {
 	
 	Body asteroid;
 	
-	TextureRegion region;
+	Sprite region;
 	
-	public Asteroid(Body body, float size, TextureRegion srpite) {
+	public Asteroid(Body body, float size, Sprite sprite) {
 		this.asteroid = body;
-		this.region = srpite;
+		this.region = sprite;
 		
 		CircleShape circle2 = new CircleShape();
 		circle2.setRadius((float) (size*1f));

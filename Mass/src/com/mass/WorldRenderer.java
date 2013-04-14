@@ -235,6 +235,8 @@ public class WorldRenderer {
 		//BitmapFont font = new BitmapFont();
 		renderer.render(world.getWorld(), cam.combined);
 		//renderer.render(world, camera.combined);
+		
+		/*
 		Vector2 point1 = world.getPlayer().getBody().getPosition();
 		
 		ray.begin(GL10.GL_LINE_LOOP);
@@ -249,6 +251,7 @@ public class WorldRenderer {
 			}
 		}
 		ray.end();
+		*/
 
 		drawAll();  
 		
@@ -462,10 +465,10 @@ public class WorldRenderer {
 			    sprite = new Sprite(image);
 			    //spriteBatch.draw(image, drawPosition.x-(radius*3), drawPosition.y-(radius*3), radius*6, radius*6);
 			    sprite.setSize(radius*6, radius*6);
-			    //sprite.setOrigin(0, 0);
+			    sprite.setOrigin(85, 85);
 			    //sprite.setOrigin(drawPosition.x-180, drawPosition.y-100);
 			    sprite.setPosition(drawPosition.x-(radius*3), drawPosition.y-(radius*3));
-				sprite.setRotation(angle);
+				//sprite.setRotation(angleDeg-angle);
 				sprite.draw(spriteBatch);
 				
 			}
@@ -481,16 +484,16 @@ public class WorldRenderer {
 			
 			for(Asteroid asteroid : asteroids) {
 				
-				float angle = asteroid.getBody().getAngle()* MathUtils.radiansToDegrees;
-				planetPosition = asteroid.getBody().getPosition();
-				drawPosition.set(planetPosition.x, planetPosition.y, 0);
+				int angle = (int) (asteroid.getBody().getAngle()* MathUtils.radiansToDegrees);
+				Vector2 asterPosition = asteroid.getBody().getPosition();
+				drawPosition.set(asterPosition.x, asterPosition.y, 0);
 			    this.cam.project(drawPosition);
 			    float radius = 3;
 			    sprite = asteroid.region;
 			    sprite.setSize(radius*6, radius*6);
-			    //sprite.setOrigin(0, 0);
+			    sprite.setOrigin(10, 10);
 			    sprite.setPosition(drawPosition.x-(radius*3), drawPosition.y-(radius*3));
-				//sprite.setRotation(angle);
+				sprite.setRotation(angle-angleDeg);
 				sprite.draw(spriteBatch);
 				
 			}

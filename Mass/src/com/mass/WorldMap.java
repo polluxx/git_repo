@@ -24,12 +24,19 @@ import com.badlogic.gdx.utils.XmlReader.Element;
 public class WorldMap {
 	
 	public Element coords;
+	public Element corners;
+	public Element trashes;
 	
 	private Element coord;
 	
-	public String size;
+	public int size;
+	public int gridSize = 200;
+	
+	public int currentGridCell = 0;
 	
 	private NewWorld world;
+	
+	Sprite[] textures = new Sprite[5];
 	
 	Asteroid asteroid;
 	Sprite asteroidSprite = new Sprite();
@@ -45,40 +52,106 @@ public class WorldMap {
 	Array<Planet> planets;
 	
 	Array<Asteroid> asteroids;
-	TextureRegion ast2;
-	TextureRegion ast3;
-	TextureRegion ast4;
-	TextureRegion ast5;
-	TextureRegion ast6;
 	public  Map<String, TextureRegion> textureRegions;
+	
+	//set MAP
+	Element MAP;
 	
 	public WorldMap(NewWorld world2) {
 		this.world = world2;
-        FileHandle xmlmap = Gdx.files.internal( "data/maps/map_perlin2.xml" );
-        textureRegions = new HashMap<String, TextureRegion>();
+        FileHandle xmlmap = Gdx.files.internal( "data/maps/map3.xml" );
+        
         //if( xmlmap.exists() ) {
 	        String data_file = xmlmap.readString();
 	        XmlReader reader = new XmlReader();
-	        Element data_formated = reader.parse(data_file);
-	        coords = data_formated.getChildByName("centers");
-	        size = data_formated.getAttribute("size");
+	        MAP = reader.parse(data_file);
+	        coords = MAP.getChildByName("centers");
+	        corners = MAP.getChildByName("corners");
+	        trashes = MAP.getChildByName("trashes");
+	        size = (int) Float.parseFloat(MAP.getAttribute("size"));
         //}
+	       
+        setWorldGrid();
+	        
 	    for (int i = 0; i < coords.getChildCount(); i++) {
 	    	coord = coords.getChild(i);
-	    	float elevation = Float.parseFloat(coord.getAttribute("elevation"));
-	    	if (elevation > 0.8) {
+	    	
+	    	//float elevation = Float.parseFloat(coord.getAttribute("elevation"));
+	    	topPoints.add(coord);
+	    	
+	    	/*if (elevation > 0.8) {
 	    		topPoints.add(coord);
 	    	} else if (elevation > 0.3 && elevation < 0.8) {
 	    		asterPoints.add(coord);
 	    	} else {
 	    		trashPoints.add(coord);
-	    	}
+	    	}*/
 	    	
 	    }
-	        
+	    if (trashes != null) {
+		    for (int i = 0; i < trashes.getChildCount(); i++) {
+		    	Element trash = trashes.getChild(i);
+		    	asterPoints.add(trash);
+		    }
+	    }
 		createPlanets();
 		createAsteroids();
 		//createTrash();
+	}
+	
+	private void setWorldGrid() {
+		int startKey = 4;
+		int squaredX = 0;
+		int squaredY = 0;
+		int gridNumber = size / gridSize;
+		int currentSize = size;
+		
+		int i = 0;
+		do {
+			
+			i++;
+			if (squaredX < size/2) {
+				squaredX += gridSize;
+			} else {
+				if (squaredY+gridSize < size/2) {
+					squaredX = 0;
+					squaredY += gridSize;
+				} else {
+					break;
+				}
+			}
+			
+			Element cornertl = new Element("corner", MAP.getChildByName("corners"));
+			cornertl.setAttribute("lx", ""+squaredX);
+			cornertl.setAttribute("ly", ""+squaredY);
+			cornertl.setAttribute("id", ""+i);
+			cornertl.setAttribute("rx", ""+(squaredX+gridSize));
+			cornertl.setAttribute("ry", ""+(squaredY+gridSize));
+			cornertl.setAttribute("elevation", "1");
+			
+			MAP.getChildByName("corners").addChild(cornertl);
+			
+		} while (squaredY < size/2);
+		
+		
+	}
+	
+	public int getGridId(Vector2 coord) {
+		int id = 0;
+		for (int i = 0; i < corners.getChildCount(); i++) {
+	    	Element corner = corners.getChild(i);
+	    	float lx = Float.parseFloat(corner.getAttribute("lx"));
+	    	float ly = Float.parseFloat(corner.getAttribute("ly"));
+	    	float rx = Float.parseFloat(corner.getAttribute("rx"));
+	    	float ry = Float.parseFloat(corner.getAttribute("ry"));
+	    	
+	    	if (lx < coord.x && rx > coord.x && ly < coord.y && ry > coord.y) {
+	    		id = (int)Float.parseFloat(corner.getAttribute("id"));
+	    		break;
+	    	}
+	    	
+	    }
+		return id;
 	}
 	
 	public void createPlanets() {
@@ -86,23 +159,23 @@ public class WorldMap {
 		
         if (topPoints.size > 2) {
         	for(Element topPoint : topPoints) {
-    	    	float x = Float.parseFloat(topPoint.getAttribute("x"));
-    	    	float y = Float.parseFloat(topPoint.getAttribute("y"));
+    	    	//float x = Float.parseFloat(topPoint.getAttribute("x"));
+    	    	//float y = Float.parseFloat(topPoint.getAttribute("y"));
     	    	
-        		currentCoordsPlanet = new Vector2(x, y);
+        		//currentCoordsPlanet = new Vector2(x, y);
         		
         		for(Element nextPoint : topPoints) {
-        	    	float iterX = Float.parseFloat(nextPoint.getAttribute("x"));
-        	    	float iterY = Float.parseFloat(nextPoint.getAttribute("y"));
-        	    	iterateCoordsPlanet = new Vector2(iterX, iterY);
-        			float length = currentCoordsPlanet.dst(iterateCoordsPlanet);
+        	    	//float iterX = Float.parseFloat(nextPoint.getAttribute("x"));
+        	    	//float iterY = Float.parseFloat(nextPoint.getAttribute("y"));
+        	    	//iterateCoordsPlanet = new Vector2(iterX, iterY);
+        			//float length = currentCoordsPlanet.dst(iterateCoordsPlanet);
         			
-        			if ((int)length > 150 && planetsCoords.size < 2) {
+        			//if ((int)length > 150 && planetsCoords.size < 2) {
         				
         				planetsCoords.add(topPoint);
         				planetsCoords.add(nextPoint);
         				
-        			}
+        			//}
         			
         		}
         	}
@@ -128,29 +201,28 @@ public class WorldMap {
 	
 	public void createAsteroids() {
 		if (asterPoints.size > 1) {
-			Sprite[] textures = new Sprite[5];
 			
-			Texture texture  = new Texture(Gdx.files.internal("images/trash/asteroids.png"));
-			TextureRegion regions[][] = TextureRegion.split(texture, 64,64);
-			
-			textureRegions.put("ast"+0,  regions[0][0]);
-			textureRegions.put("ast"+1,  regions[1][0]);
-			textureRegions.put("ast"+2,  regions[2][0]);
-			textureRegions.put("ast"+3,  regions[3][0]);
-			textureRegions.put("ast"+4,  regions[0][1]);
+			textureRegions = world.getTextures();
 			
 			for(int i = 0; i<5; i++) {
 				textures[i] = new Sprite(textureRegions.get("ast"+i));
 			}
 			
-			
+			int counter = 0;
 			for(Element asteroid : asterPoints) { 
 				double rand = Math.random() * 10 / 2;
-				
-    	    	float coordX = Float.parseFloat(asteroid.getAttribute("x"));
-    	    	float coordY = Float.parseFloat(asteroid.getAttribute("y"));
-    	    	float size  = Float.parseFloat(asteroid.getAttribute("elevation"));
-    	    	createAsteroid(coordX*2, coordY*2, size + 1, textures[(int)rand]);
+				counter++;
+				if (counter < 300) {
+	    	    	float coordX = Float.parseFloat(asteroid.getAttribute("x"));
+	    	    	float coordY = Float.parseFloat(asteroid.getAttribute("y"));
+	    	    	float size  = Float.parseFloat(asteroid.getAttribute("elevation"));
+	    	    	createAsteroid(coordX, coordY, size + 1, textures[(int)rand], "asteroid");
+				}
+    	    	//float coordrX = Float.parseFloat(asteroid.getAttribute("rx"));
+    	    	//float coordrY = Float.parseFloat(asteroid.getAttribute("ry"));
+    	    	
+    	    	//createAsteroid(coordrX, coordrY, size + 1, textures[(int)rand], "asteroid");
+    	    	
     	    	
 			}
 		}
@@ -159,24 +231,26 @@ public class WorldMap {
 	public void createTrash() {
 		if (trashPoints.size > 1) {
 			for(Element trash : trashPoints) { 
+				double rand = Math.random() * 10 / 2;
     	    	float coordX = Float.parseFloat(trash.getAttribute("x"));
     	    	float coordY = Float.parseFloat(trash.getAttribute("y"));
     	    	float size  = Float.parseFloat(trash.getAttribute("elevation"));
-    	    	createAsteroid(coordX, coordY, size, asteroidSprite);
+    	    	createAsteroid(coordX, coordY, size, asteroidSprite, "trash");
 			}
 		}
 	}
 	
-	public void createAsteroid(float x, float y, float size, Sprite region) {
+	public void createAsteroid(float x, float y, float size, Sprite region, String type) {
 		BodyDef bodyDef2 = new BodyDef();
 		bodyDef2.type = BodyType.DynamicBody;
 		bodyDef2.position.set(x , y);
 		Body asteroidBody = world.getWorld().createBody(bodyDef2);
 		asteroid = new Asteroid(asteroidBody, size, region);
 		
-		// adding trash to array
-		asteroids = world.getAsteroids();
-		asteroids.add(asteroid);
-		
+		if (type == "asteroid") {
+			// adding trash to array
+			asteroids = world.getAsteroids();
+			asteroids.add(asteroid);
+		}
 	}
 }

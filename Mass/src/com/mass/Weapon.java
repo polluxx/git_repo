@@ -180,9 +180,9 @@ public class Weapon {
 		poly.dispose();
 		
 		Vector2 direction = new Vector2(x - arrowBody.getPosition().x, y - arrowBody.getPosition().y);
-		Vector2 impulse = new Vector2(direction.x * 100 , direction.y * 100 );
+		Vector2 impulse = new Vector2(direction.x * 1000 , direction.y * 1000 );
 		  
-	    arrowBody.applyLinearImpulse(impulse, arrowBody.getPosition());
+	    arrowBody.setLinearVelocity(impulse);
 	}
 	
 	public void destroyGrip() {

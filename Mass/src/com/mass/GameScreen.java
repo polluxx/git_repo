@@ -2,6 +2,7 @@
 package com.mass;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 import com.badlogic.gdx.Application.ApplicationType;
@@ -62,7 +63,6 @@ public class GameScreen implements Screen, InputProcessor {
 	private SpriteBatch spriteBatch;
 	Texture texture;
 	public  Map<String, TextureRegion> textureRegions;// = new HashMap<String, TextureRegion>();
-	public  Map<String, TextureRegion> textureRegions2;// = new HashMap<String, TextureRegion>();
 	private SpriteBatch batch;
 	private Sprite sprite;
 	
@@ -90,10 +90,10 @@ public class GameScreen implements Screen, InputProcessor {
 	private WorldController	controller;
 	  
 	public void show() {
-		
+		textureRegions = new HashMap<String, TextureRegion>();
 		NewWorld.CAMERA_WIDTH =  NewWorld.CAMERA_HEIGHT* Gdx.graphics.getWidth()/Gdx.graphics.getHeight();
 		loadTextures();
-		world = new NewWorld();
+		world = new NewWorld(textureRegions);
 	
 		renderer = new WorldRenderer(world, NewWorld.CAMERA_WIDTH, NewWorld.CAMERA_HEIGHT,true);
 		controller = new WorldController(world/*, renderer*/);
@@ -113,7 +113,14 @@ public class GameScreen implements Screen, InputProcessor {
 	}
 	
 	private void loadTextures() {
+		texture  = new Texture(Gdx.files.internal("images/atlas.png"));
+		TextureRegion regions[][] = TextureRegion.split(texture, 64,64);
 		
+		textureRegions.put("ast"+0,  regions[1][0]);
+		textureRegions.put("ast"+1,  regions[2][0]);
+		textureRegions.put("ast"+2,  regions[3][0]);
+		textureRegions.put("ast"+3,  regions[4][0]);
+		textureRegions.put("ast"+4,  regions[5][0]);
 	}
 	
 	private void createVelocitySlider() {
@@ -230,10 +237,10 @@ public class GameScreen implements Screen, InputProcessor {
 		Gdx.gl.glClear(GL10.GL_COLOR_BUFFER_BIT);
 		//world.update(delta);
 		//world.draw();
-		renderer.render(delta);
+		
 		stage.act( delta );
 		stage.draw();
-		
+		renderer.render(delta);
 		
 		controller.update(delta);
 		
@@ -245,7 +252,7 @@ public class GameScreen implements Screen, InputProcessor {
 		Array<Planet> planets = world.getPlanets();
 		for(Planet planet : planets) {
 			
-			float planetRadius = 3000f;
+			float planetRadius = 300f;
 			Vector2 planetDistance = new Vector2(0,0);
 	        planetDistance.add(playerBody.getPosition());
 			planetDistance.sub(planet.getBody().getPosition());

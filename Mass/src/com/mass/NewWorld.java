@@ -88,6 +88,9 @@ public class NewWorld {
 	// -- asteroids create --
 	Array<Asteroid> asteroids = new Array<Asteroid>();
 	
+	// texture regions
+	java.util.Map<String, TextureRegion> textureRegions;
+	
 	/** a hit body **/
 	Body hitBody = null;
 	
@@ -149,7 +152,12 @@ public class NewWorld {
 		return world;
 	}
 	
-	public NewWorld(){
+	public java.util.Map<String, TextureRegion> getTextures() {
+		return textureRegions;
+	};
+	
+	public NewWorld(java.util.Map<String, TextureRegion> textures){
+		textureRegions = textures;
 		width = 12;
 		height = 8;
 		world = new World(new Vector2(0, 0), true);	
@@ -162,6 +170,10 @@ public class NewWorld {
         map = new WorldMap(this);
 
 		createWorld();
+	}
+	
+	public WorldMap getWorldMap() {
+		return map;
 	}
 	
 	
@@ -240,40 +252,6 @@ public class NewWorld {
 	    
 		//  ------ END PLAYER ------
 		
-
-		BodyDef defPlanet = new BodyDef();
-		defPlanet.type = BodyType.StaticBody;
-		Body boxPlanet = world.createBody(defPlanet);
-		planet = new Planet(boxPlanet, 30f);
-		planet.getBody().setTransform(30.0f, 42.0f, 0);
-		
-		// -- CREATING ASTEROIDS  --
-		//createAsteroids();
-		
-		
-		// First we create a body definition
-		BodyDef bodyDef3 = new BodyDef();
-		bodyDef3.type = BodyType.DynamicBody;
-		bodyDef3.position.set(planet.getBody().getWorldCenter().x - 30, planet.getBody().getWorldCenter().y - 40);
-		Body body3 = world.createBody(bodyDef3);
-		
-		CircleShape circle3 = new CircleShape();
-		circle3.setRadius(5f);
-		
-		// Create a fixture definition to apply our shape to
-		FixtureDef fixtureDef3 = new FixtureDef();
-		fixtureDef3.shape = circle3;
-		fixtureDef3.density = 0.1f; 
-		fixtureDef3.friction = 0.1f;
-		fixtureDef3.restitution = 0.1f; // Make it bounce a little bit
-		body3.createFixture(fixtureDef3);
-		
-		
-		circle3.dispose();
-		
-		
-		//createBox();
-		//addPlanet(1200,950,400);
 	}
 	
 	public void createAsteroids() {

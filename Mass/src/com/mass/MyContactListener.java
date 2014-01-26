@@ -27,10 +27,11 @@ public class MyContactListener implements ContactListener{
 		//System.out.println(newworld.getPlayer());
 		Object bodyUserData = contact.getFixtureA().getBody().getUserData();
 		Object targetUserData = contact.getFixtureB().getBody().getUserData();
+		
 		if (bodyUserData == "bullet" && targetUserData != "ship") {
-			//contact.getFixtureA().setSensor(false);
+			contact.getFixtureA().setSensor(false);
 			Array<Body> destroyed = newworld.getDestroyedBodies();
-			Body destroy = contact.getFixtureA().getBody();
+			Body destroy = contact.getFixtureB().getBody();
 			
 			if (destroyed.size > 0) {
 				if (destroyed.indexOf(destroy, true) == -1) {
@@ -38,6 +39,7 @@ public class MyContactListener implements ContactListener{
 				}
 			} else {
 				destroyed.add(destroy);
+				
 			}
 		}
 		
@@ -59,7 +61,22 @@ public class MyContactListener implements ContactListener{
 	@Override
 	public void endContact(Contact contact) {
 		// TODO Auto-generated method stub
+		/*Object bodyUserData = contact.getFixtureB().getBody().getUserData();
 		
+		if (bodyUserData == "bullet") {
+			contact.getFixtureB().setSensor(false);
+			Array<Body> destroyed = newworld.getDestroyedBodies();
+			Body destroy = contact.getFixtureB().getBody();
+			
+			if (destroyed.size > 0) {
+				if (destroyed.indexOf(destroy, true) == -1) {
+					destroyed.add(destroy);
+				}
+			} else {
+				destroyed.add(destroy);
+				
+			}
+		}*/
 	}
 
 	@Override

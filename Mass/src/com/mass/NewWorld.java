@@ -67,8 +67,8 @@ public class NewWorld {
     //private static mapWorld;
     private WorldMap map;
 	
-	public static float CAMERA_WIDTH = 12f;
-	public static  float CAMERA_HEIGHT = 8f;
+	public static float CAMERA_WIDTH = 8f;
+	public static  float CAMERA_HEIGHT = 12f;
 	
 	public int width;
 	public int height;
@@ -119,8 +119,8 @@ public class NewWorld {
 		return chains;
 	}
 	
-	public void setDestroyedBodies(Array<Body> destroy) {
-		this.destroyed = destroy;
+	public void setDestroyedBodies(Array<Body> destroyed) {
+		this.destroyed = destroyed;
 	}
 	
 	public void setConnectedBodies(Array<Body> connect) {
@@ -147,6 +147,10 @@ public class NewWorld {
 		return asteroids;
 	}
 	
+	public void setAsteroids(Array<Asteroid> asteroids) {
+		this.asteroids = asteroids;
+	}
+	
 	
 	public World getWorld(){
 		return world;
@@ -158,8 +162,8 @@ public class NewWorld {
 	
 	public NewWorld(java.util.Map<String, TextureRegion> textures){
 		textureRegions = textures;
-		width = 12;
-		height = 8;
+		width = 8;
+		height = 12;
 		world = new World(new Vector2(0, 0), true);	
 		world.setContactListener(new MyContactListener(world, this));
 		//world.setAutoClearForces(true);

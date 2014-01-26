@@ -135,6 +135,11 @@ public class Player {
 		return box;
 	}
 	
+	public void setMove(float x, float y) {
+		Xset = x;
+		Yset = y;
+	}
+	
 	public void setPlayerStop() {
 		state = State.COLLIDE;
 	}
@@ -155,8 +160,32 @@ public class Player {
 	
 	Vector2 	velocity = new Vector2();
 	public void update(float delta) {
-		Vector2 vel = new Vector2(Xset, Yset);
-		//int distance = (int) vel.dst(box.getPosition());
+		
+		if (Xset != 0.0 && Yset != 0.0) {
+			Vector2 vel = new Vector2(Xset, Yset);
+			//System.out.println(vel);
+			int distance = (int) vel.dst(box.getPosition());
+			//System.out.println("distance: "+distance);
+			
+			float diffX = vel.x - this.getBody().getPosition().x;
+			float diffY = (vel.y - this.getBody().getPosition().y);
+			Vector2 touchedPoint = new Vector2(diffX, diffY);
+
+			box.setTransform(box.getPosition().x, box.getPosition().y, touchedPoint.angle() * MathUtils.degreesToRadians);
+			
+			//System.out.println("angP: "+this.getBody().getAngle());
+			//System.out.println("ang: "+touchedPoint.angle());
+			//Vector2 vector = new Vector2(vel.x ,vel.y);
+			
+			
+			float flyingAngle = (float) Math.atan2(vel.y, vel.x);
+			//System.out.println("angle: "+flyingAngle);
+			float forceAngular = flyingAngle * MathUtils.radiansToDegrees;
+			//System.out.println(forceAngular);
+			//box.setTransform(box.getPosition(), forceAngular);
+			//box.setAngularVelocity(forceAngular);
+			//box.applyLinearImpulse(vector, box.getPosition());
+		}
 		/*
 		if (CURRENT_VELOCITY > MAX_VELOCITY) {
 			CURRENT_VELOCITY = MAX_VELOCITY;
@@ -272,8 +301,8 @@ public class Player {
 		return ENERGY;
 	}
 	
-	public void setEnergy(float energy) {
-		ENERGY += energy;
+	public void setEnergy(double d) {
+		ENERGY += d;
 	}
 	
 	public void resetVelocity(){

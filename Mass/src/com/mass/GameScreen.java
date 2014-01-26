@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL10;
@@ -43,13 +44,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton.ImageButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener.ChangeEvent;
 import com.badlogic.gdx.utils.Array;
 import com.mass.Player.State;
 import com.mass.Weapon.WeaponType;
 
-public class GameScreen implements Screen, InputProcessor {
+public class GameScreen extends DragListener implements Screen, InputProcessor {
 
 	
 	private static final int DEGTORAD = 1;
@@ -88,6 +90,23 @@ public class GameScreen implements Screen, InputProcessor {
 	/** our ground box **/
 	Body groundBody;
 	private WorldController	controller;
+	
+	/*
+	 * WEAPON
+	 * */
+	public boolean fireRelease = false; 
+	public int counter = 0;
+	
+	/**
+	 * PAUSE CLICK COUNTER
+	 */
+	public int touchCount = 0;
+	
+	/**
+	 * SCREEN COORDS
+	 */
+	Vector2 cameraCenter = new Vector2();
+	Vector2 cameraDiff = new Vector2();
 	  
 	public void show() {
 		textureRegions = new HashMap<String, TextureRegion>();
@@ -100,16 +119,17 @@ public class GameScreen implements Screen, InputProcessor {
 		
 
 
-		spriteBatch = new SpriteBatch();
-		spriteBatch.enableBlending();
-		spriteBatch.setBlendFunction(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-		stage = new Stage(screenWidth, (float) screenHeight, false, spriteBatch);
-		Gdx.input.setInputProcessor(stage);
+		//spriteBatch = new SpriteBatch();
+		//spriteBatch.enableBlending();
+		//spriteBatch.setBlendFunction(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		//stage = new Stage(screenWidth, (float) screenHeight, false, spriteBatch);
+		//Gdx.input.setInputProcessor(stage);
 		
-		skin = new Skin(Gdx.files.internal("data/uiskin.json"));
-		//Gdx.input.setInputProcessor(this);
-		createFireButton();
-		createVelocitySlider();
+		//skin = new Skin(Gdx.files.internal("data/uiskin.json"));
+		Gdx.input.setInputProcessor(this);
+		Gdx.input.setCatchBackKey(true);
+		//createFireButton();
+		//createVelocitySlider();
 	}
 	
 	private void loadTextures() {
@@ -168,11 +188,27 @@ public class GameScreen implements Screen, InputProcessor {
 		imgButton.setX(screenWidth - 80);
 		imgButton.setY( (float) (40));
 		stage.addActor(imgButton);
-		imgButton.addListener( new ClickListener() {
+		/*imgButton.addListener( new ClickListener() {
 			public void clicked(InputEvent event, float x, float y) {
 				fireReleased();
 		    };
-	    } );
+		    
+	    } );*/
+		
+		InputListener startTouchDown = new InputListener() {
+			public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+				fireRelease = true;
+				return true;
+			}
+			public void touchUp (InputEvent event, float x, float y, int pointer, int button) {
+				fireRelease = false;
+			}
+		};
+		
+
+		
+		imgButton.addListener(startTouchDown);
+
 	}
 
 	
@@ -209,10 +245,20 @@ public class GameScreen implements Screen, InputProcessor {
 
 	@Override
 	public void pause() {
+		renderer.state = renderer.GAME_PAUSED;
 	}
 
 	@Override
 	public void resume() {
+		renderer.state = renderer.GAME_RUNNING;
+	}
+	
+	public void changePause() {
+		if (renderer.state == renderer.GAME_RUNNING) {
+			this.pause();
+		} else {
+			this.resume();
+		}
 	}
 
 	@Override
@@ -226,7 +272,13 @@ public class GameScreen implements Screen, InputProcessor {
 
 	@Override
 	public boolean keyDown(int keycode) {
-		
+       if(keycode == Keys.BACK){
+    	   Gdx.app.exit();
+       }
+       
+       if (keycode == Keys.MENU) {
+    	   this.changePause();
+       }
 		return true;
 	}
  
@@ -238,8 +290,8 @@ public class GameScreen implements Screen, InputProcessor {
 		//world.update(delta);
 		//world.draw();
 		
-		stage.act( delta );
-		stage.draw();
+		//stage.act( delta );
+		//stage.draw();
 		renderer.render(delta);
 		
 		controller.update(delta);
@@ -270,7 +322,13 @@ public class GameScreen implements Screen, InputProcessor {
 		}
 
 		
-
+		if (fireRelease == true) {
+			counter++;
+			if (counter > 2) {
+				fireReleased();
+				counter = 0;
+			}
+		}
 		  
 		  
 		/*
@@ -312,10 +370,22 @@ public class GameScreen implements Screen, InputProcessor {
 	Vector3 testPoint = new Vector3();
 	
 	public void  fireReleased() {
+		
 		float angle = world.getPlayer().getAngle();
 	    Vector2 vect = new Vector2((float)(Math.cos(angle)), (float)(Math.sin(angle)));
-	    // toDo: why this magic to angle the vector???
-	    Vector2 newVect = new Vector2(vect.x + 225 , vect.y -90);
+	    
+	    double randomize = 0.9;
+	    double rand = Math.random();
+	    if (rand < 0.5) {
+	    	randomize = 0.97;
+	    } else if(rand < 0.7 && rand > 0.6) {
+	    	randomize = 1;
+	    } else {
+	    	randomize = 1.03;
+	    }
+	    
+		// toDo: why this magic to angle the vector???
+	    Vector2 newVect = new Vector2((vect.x + 225) * (float)randomize , vect.y -90);
 		
 		testPoint.set(newVect.x, newVect.y, 0);
 		
@@ -330,20 +400,35 @@ public class GameScreen implements Screen, InputProcessor {
 			
 			//weapon.createBlaster(testPoint.x, testPoint.y);
 			weapon.createIP(testPoint.x, testPoint.y);
-			world.getPlayer().setEnergy(-1);
+			world.getPlayer().setEnergy(-0.5);
 		}
 	}
-    
 	
 	public boolean touchDown(int x, int y, int pointer, int button) {
 		//controller.resetWay();
 		//if (!Gdx.app.getType().equals(ApplicationType.Android))
 		//	return false;
 		boolean firstFingerTouching = Gdx.input.isTouched(0);
+		boolean secondFingerTouching = Gdx.input.isTouched(1);
 		boolean thirdFingerTouching = Gdx.input.isTouched(2);
 		
+		if (firstFingerTouching) {
+
+			testPoint.set(x, y, 0);
+			
+			renderer.getCamera().unproject(testPoint);
+			
+			world.getPlayer().setMove(testPoint.x, testPoint.y);
+			
+			
+		}
+		
+		if (secondFingerTouching) {
+			//this.changePause();
+		}
+		
 		if (thirdFingerTouching) {
-			world.getWeapon().destroyGrip();
+			//world.getWeapon().destroyGrip();
 		}
 		
 		return true;
@@ -356,6 +441,8 @@ public class GameScreen implements Screen, InputProcessor {
 	
 		//controller.resetWay();
 		hitBody = null;
+		cameraCenter.set(0, 0);
+		cameraDiff.set(0, 0);
 		return true;
 	}
 	
@@ -366,23 +453,23 @@ public class GameScreen implements Screen, InputProcessor {
 		int min_touch_y = (int) (Gdx.graphics.getHeight() * 0.9);
 		boolean firstFingerTouching = Gdx.input.isTouched(0);
 		boolean secondFingerTouching = Gdx.input.isTouched(1);
-		
-		//testPoint.set(x, y, 0);
-		
-		//renderer.getCamera().unproject(testPoint);
-		
+
 		if (secondFingerTouching == true) {
-			renderer.SetScreenSize(Gdx.input.getX());
+			//renderer.SetScreenSize(Gdx.input.getX());
 		}
 		
-		if (firstFingerTouching == true && Gdx.input.getY() < min_touch_y) {
+		if (firstFingerTouching == true) {
 			
+			testPoint.set(x, y, 0);
 			
-			//world.getWorld().QueryAABB(callback, testPoint.x - 0.0001f, testPoint.y - 0.0001f, testPoint.x + 0.0001f, testPoint.y + 0.0001f);
-
+			renderer.getCamera().unproject(testPoint);
+			world.getWorld().QueryAABB(callback, testPoint.x - 1f, testPoint.y - 1f, testPoint.x + 1f, testPoint.y + 1f);
+			
 			// TODO: Repair;
 			// if (hitBody == groundBody) hitBody = null;
-
+			
+			//changeCamera(x, y);
+			
 			if (hitBody != null && hitBody.getType() == BodyType.KinematicBody) 
 				return false;
 
@@ -397,6 +484,7 @@ public class GameScreen implements Screen, InputProcessor {
 				world.getPlayer().state = State.FLYING;
 				*/
 			} else {
+				changeCamera(testPoint.x, testPoint.y);
 				//ChangeNavigation(testPoint.x,testPoint.y);
 			}
 			
@@ -413,6 +501,65 @@ public class GameScreen implements Screen, InputProcessor {
 	public boolean scrolled(int amount) {
 		//System.out.println(amount);
 		return false;
+	}
+	
+	public void changeCamera(float x, float y) {
+		if (renderer.state == renderer.GAME_PAUSED) {
+			if (cameraCenter.x == 0 && cameraCenter.y == 0) {
+				cameraCenter.set(x, y);
+			}
+			cameraDiff.set(x - cameraCenter.x, y - cameraCenter.y);
+			
+			OrthographicCamera cam = renderer.getCamera();
+			
+			cam.position.set(cam.position.x - cameraDiff.x, cam.position.y - cameraDiff.y, 0);
+			//cam.normalizeUp();
+			cam.update();
+		}
+	}
+	
+	
+	QueryCallback callback = new QueryCallback() {
+		@Override
+		public boolean reportFixture (Fixture fixture) {
+			
+			//if (fixture.testPoint(testPoint.x, testPoint.y)) {
+				
+				Object bodyUserData = fixture.getBody().getUserData();
+				
+				if (bodyUserData != null) {
+					hitBody = fixture.getBody();
+					return false;
+				} else {
+					return true;
+				}
+				/*if (bodyUserData == "asteroid") {
+					
+					
+					
+
+					Vector2 planetDistance = new Vector2(0,0);
+			        planetDistance.add(hitBody.getPosition());
+					planetDistance.sub(world.getPlayer().getBody().getPosition());
+					float finalDistance = planetDistance.len();
+					planetDistance.x = -planetDistance.x;
+					planetDistance.y = -planetDistance.y;
+					
+			        float vecSum = Math.abs(planetDistance.x)+Math.abs(planetDistance.y);
+			        planetDistance.mul((1/vecSum)*1000f/finalDistance);
+			        hitBody.applyForce(planetDistance, hitBody.getWorldCenter());
+					
+					hitBody.setActive(true);
+				}
+				return false;*/
+			//} else
+			//	return true;
+		}
+	};
+	
+	@Override
+	public void drag(InputEvent event, float x, float y, int pointer) {
+		System.out.println(x);
 	}
 	
 }

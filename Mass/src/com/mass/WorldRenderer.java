@@ -138,6 +138,16 @@ public class WorldRenderer {
 	
 	WorldMap map;
 	
+	/*
+	 * GAME STAGING
+	 * */
+	static final int GAME_RUNNING = 1;
+	static final int GAME_PAUSED = 2;
+	static final int GAME_OVER = 3;
+	
+	public int state = 1;
+	
+	
 	public WorldRenderer(final NewWorld world, float w, float h, boolean debug) {
 		renderer = new Box2DDebugRenderer();
 		
@@ -152,11 +162,11 @@ public class WorldRenderer {
 		 textureRegions = new HashMap<String, TextureRegion>();
 		//loadTextures();
 		this.cam = new OrthographicCamera(CAMERA_WIDTH, CAMERA_HEIGHT);
-		this.cam.viewportHeight = 8f;  
-		this.cam.viewportWidth = 12f;  
+		this.cam.viewportHeight = 12f;  
+		this.cam.viewportWidth = 8f;  
 		
 		zoom = this.cam.zoom = 15;
-		ray=new ImmediateModeRenderer10();
+		//ray=new ImmediateModeRenderer10();
 		map = world.getWorldMap();
 		//Texture img2 = new Texture(Gdx.files.internal("data/arr.png"));
 		
@@ -181,11 +191,12 @@ public class WorldRenderer {
 	
 	public void SetScreenSize(float delta) {
 		zoom = delta/10;
+		
 		//if (zoom > this.cam.zoom) {
-		for (int i = 0; i<zoom; i++) {
+		/*for (int i = 0; i<zoom; i++) {
 			this.cam.zoom = i;
 			this.cam.update();
-		}
+		}*/
 	}
 	
 	public void SetBodyAngle(Body body, float angle) {
@@ -241,7 +252,7 @@ public class WorldRenderer {
 		
 		
 		Vector2 point1 = world.getPlayer().getBody().getPosition();
-		
+		/*
 		ray.begin(GL10.GL_LINE_LOOP);
 		planets = world.getPlanets();
 		if (planets.size > 1) {
@@ -254,34 +265,66 @@ public class WorldRenderer {
 			}
 		}
 		ray.end();
-		
+		*/
 
 		drawAll();  
 		
-		changeAngle();
+		//changeAngle();
 		
 		changeEnergy();
 		
-		
+		destroyBodies();
 		
 		// make WORLD step
-		world.getWorld().step(delta, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
-		world.getWorld().clearForces();
+		if (state == this.GAME_RUNNING) {
+			world.getWorld().step(delta, BOX_VELOCITY_ITERATIONS, BOX_POSITION_ITERATIONS);
+			world.getWorld().clearForces();
+			
+			world.reloadMap(world.getPlayer().getBody().getPosition());
+			
+			SetCamera(world.getPlayer().getBody().getPosition().x, world.getPlayer().getBody().getPosition().y, 0);
+			
+		}
+		
 		//connectBodies();
 		//world.killBodies();
-		world.reloadMap(world.getPlayer().getBody().getPosition());
-		
-		SetCamera(world.getPlayer().getBody().getPosition().x, world.getPlayer().getBody().getPosition().y, 0);
-		
+
+	}
+	
+	private void destroyBodies() {
+		Array<Body> kill = world.getDestroyedBodies();
+		asteroids = world.getAsteroids();
+		if (kill.size > 0) {
+			for(int i=0; i<kill.size; i++) {
+				Body marked = kill.get(i);
+				for (int astrIndex=0; astrIndex < asteroids.size; astrIndex++) {
+					Asteroid markedAstr = asteroids.get(astrIndex);
+					if (markedAstr.getBody() == marked) {
+						asteroids.removeIndex(astrIndex);
+						world.getWorld().destroyBody(marked);
+					}
+				}
+				//sprite = marked.region;
+				//spriteBatch.disableBlending();
+				
+				//kill.removeIndex(i);
+				
+			}
+		}
+		//System.out.println(kill);
 	}
 	
 	private void drawAll() {
 		//spriteBatch.setProjectionMatrix(cam.combined);
-		int cell = map.getGridId(world.getPlayer().getBody().getPosition());
+		//int cell = map.getGridId(world.getPlayer().getBody().getPosition());
 		spriteBatch.begin();
 		font.draw(spriteBatch, "Ship position x : "+(int)world.getPlayer().getBody().getPosition().x+"  y : "+(int)world.getPlayer().getBody().getPosition().y, 20, 60);
-		//font.draw(spriteBatch, "Energy : " + (int)world.getPlayer().getEnergy(), 20, 20);
-		font.draw(spriteBatch, "Cell : " + cell, 20, 20);
+		font.draw(spriteBatch, "Energy : " + (int)world.getPlayer().getEnergy(), 20, 40);
+		
+		if (state == this.GAME_PAUSED) {
+			font.draw(spriteBatch, "Pause", screenWidth/2 , 20);
+		}
+		//font.draw(spriteBatch, "Cell : " + cell, 20, 20);
 		//drawPlayer();
 		drawPlanet();
 		drawTrash();
@@ -309,7 +352,13 @@ public class WorldRenderer {
 			angleVelo = (int) -angleNor;
 		}
 		
-		if (angleVelo > 2) {
+		changePlayerAngle(angleVelo, angleNor);
+
+	}
+	
+	public void changePlayerAngle(int angularVelocity, float angleNor) {
+		Body player = world.getPlayer().getBody();
+		if (angularVelocity > 2) {
 			player.applyForce(-angleNor * (world.getPlayer().getCurrentVelocity() / 2), angleNor * world.getPlayer().getCurrentVelocity() * 2, player.getPosition().x, player.getPosition().y);
 			player.applyAngularImpulse(angleNor);
 		}
@@ -317,37 +366,7 @@ public class WorldRenderer {
 	
 	Vector3 testPoint = new Vector3();
 	Array<Body> founded = new Array<Body>();
-	QueryCallback callback = new QueryCallback() {
-		@Override
-		public boolean reportFixture (Fixture fixture) {
-			
-			//if (fixture.testPoint(testPoint.x, testPoint.y)) {
-				
-				Object bodyUserData = fixture.getBody().getUserData();
-				
-				if (bodyUserData == "asteroid") {
-					hitBody = fixture.getBody();
-					
-					
 
-					Vector2 planetDistance = new Vector2(0,0);
-			        planetDistance.add(hitBody.getPosition());
-					planetDistance.sub(world.getPlayer().getBody().getPosition());
-					float finalDistance = planetDistance.len();
-					planetDistance.x = -planetDistance.x;
-					planetDistance.y = -planetDistance.y;
-					
-			        float vecSum = Math.abs(planetDistance.x)+Math.abs(planetDistance.y);
-			        planetDistance.mul((1/vecSum)*1000f/finalDistance);
-			        hitBody.applyForce(planetDistance, hitBody.getWorldCenter());
-					
-					hitBody.setActive(true);
-				}
-				return false;
-			//} else
-			//	return true;
-		}
-	};
 	
 	public void chainWithIP() {
 		Array<Body> chains = world.getChainsBodies();
@@ -371,10 +390,10 @@ public class WorldRenderer {
 				          
 				      //applyBlastImpulse(body, chain.getPosition(), bodyCom, 10 );
 				      
-						ray.begin(GL10.GL_LINE_LOOP);
-						ray.color(1, 0, 0, 1);
-						ray.vertex(bodyCom.x,bodyCom.y,0);
-						ray.end();
+						//ray.begin(GL10.GL_LINE_LOOP);
+						//ray.color(1, 0, 0, 1);
+						//ray.vertex(bodyCom.x,bodyCom.y,0);
+						//ray.end();
 				  }
 				
 				ray.dispose();

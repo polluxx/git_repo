@@ -156,7 +156,7 @@ public class Weapon {
 	
 	public void createIP(float x, float y) {
 		PolygonShape poly = new PolygonShape();
-		poly.setAsBox((float) 0.3, (float) 0.3);
+		poly.setAsBox((float) 0.2, (float) 0.2);
 		
 		BodyDef bodyDef2 = new BodyDef();
 		bodyDef2.type = BodyType.DynamicBody;
@@ -165,15 +165,15 @@ public class Weapon {
 		// Create a fixture definition to apply our shape to
 		FixtureDef fixtureDef2 = new FixtureDef();
 		fixtureDef2.shape = poly;
-		fixtureDef2.density = 0.4f; 
-		fixtureDef2.friction = 0.7f;
+		fixtureDef2.density = 0.1f; 
+		fixtureDef2.friction = 0.01f;
 		fixtureDef2.restitution = 0; 
 		arrowBody.setBullet(true);
 		arrowBody.createFixture(fixtureDef2);
 		arrowBody.setTransform(arrowBody.getPosition(), 0);
 		
 
-		String userData = "IPBlockFired";
+		String userData = "bullet";
 		
 		arrowBody.setUserData(userData);
 		
